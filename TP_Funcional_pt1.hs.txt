@@ -1,0 +1,128 @@
+--Ejercicio 1:
+data Planta = Planta{
+  especie:: String,
+  puntosDeVida:: Int,
+  cantSoles:: Int, 
+  poderAtaque:: Int 
+} deriving (Show, Eq)
+
+peaShooter = Planta "PeaShooter" 5 0 2
+repeater = Planta "Repeater" 5 0 4
+sunflower = Planta "Sunflower" 7 1 0
+nut = Planta "Nut" 100 0 0
+cordyceps = Planta "Cordyceps" 4 8 0
+rafflesia = Planta "Rafflesia" 5 0 15
+
+data Zombie = Zombie{
+  nombre:: String,
+  accesorio:: [String],
+  dañoMordida:: Int, 
+  nivelDeMuerte:: Int 
+}deriving (Show, Eq)
+
+determinarNivelDeMuerte:: String->Int
+determinarNivelDeMuerte nombre  = (length.filter(/= ' ')) nombre
+
+zombieBase = Zombie "Zombie Base" [] 1 (determinarNivelDeMuerte (nombre zombieBase))
+zombieBalloon = Zombie "Balloon Zombie" ["Globo"] 1 (determinarNivelDeMuerte (nombre zombieBalloon))
+zombieNewspaper = Zombie "Newspaper Zombie" ["Diario"] 2 (determinarNivelDeMuerte (nombre zombieNewspaper))
+gargantuar = Zombie "Gargantuar Hulk Smash Puny God" ["Poste electrico","Zombie enano"] 30 (determinarNivelDeMuerte (nombre gargantuar))
+
+--Ejercicio 2:
+especialidad :: Planta -> String
+especialidad planta | (cantSoles planta)>0 = "Proveedora"
+                    | (poderAtaque planta) > (puntosDeVida planta) = "Atacante"
+                    | otherwise = "Defensiva"
+
+esPeligroso:: Zombie->Bool
+esPeligroso zombie = (1<(length.accesorio) zombie) || ((nivelDeMuerte zombie)>10)
+
+--Ejercicio 3:
+data LineaDeDefensa = LineaDeDefensa{
+  plantas:: [Planta],
+  zombies:: [Zombie]
+}deriving (Show, Eq)
+
+linea1 = LineaDeDefensa {
+  plantas = [sunflower, sunflower, sunflower],
+  zombies = []
+}
+
+linea2 = LineaDeDefensa {
+  plantas = [peaShooter, peaShooter, sunflower, nut],
+  zombies = [zombieBase, zombieNewspaper]
+}
+
+linea3 = LineaDeDefensa {
+  plantas = [sunflower, peaShooter],
+  zombies = [gargantuar, zombieBase, zombieBase]
+}
+
+convertirEnLista:: Planta->[Planta]
+convertirEnLista planta = [planta]
+
+agregarPlanta::Planta->LineaDeDefensa->[Planta]
+agregarPlanta planta linea = (plantas linea)++(convertirEnLista planta)
+
+agregarZombie:: Zombie->LineaDeDefensa->[Zombie]
+agregarZombie zombie linea = reverse(zombie : (reverse.zombies) linea)
+
+poderAtaquePlantas:: [Planta]->Int
+poderAtaquePlantas []=0
+poderAtaquePlantas lineaPlantas = poderAtaque((head lineaPlantas))+ poderAtaquePlantas(tail lineaPlantas)
+
+mordiscosZombies:: [Zombie]->Int
+mordiscosZombies []=0
+mordiscosZombies lineaZombies = dañoMordida((head lineaZombies))+ mordiscosZombies(tail lineaZombies)
+
+listaCantPeligros::[Zombie]->[Bool]
+listaCantPeligros []=[]
+listaCantPeligros lineaZombies = [(esPeligroso.head) lineaZombies] ++ (listaCantPeligros.tail) lineaZombies
+
+esLineaPeligrosa:: LineaDeDefensa -> Bool
+esLineaPeligrosa linea = (notElem False ((listaCantPeligros.zombies) linea))&&(length (zombies linea)>0)
+ 
+estaEnPeligro:: LineaDeDefensa->Bool
+estaEnPeligro linea = ((poderAtaquePlantas.plantas) linea))<((mordiscosZombies.zombies) linea))||(esLineaPeligrosa linea)
+
+esProveedora:: Planta->Bool
+esProveedora planta = (especialidad planta =="Proveedora")
+
+listaProveedoras:: [Planta]->[Bool]
+listaProveedoras []=[]
+listaProveedoras listaPlantas = [(esProveedora.head) listaPlantas] ++ (listaProveedoras.tail) listaPlantas
+
+necesitaSerDefendida:: LineaDeDefensa->Bool
+necesitaSerDefendida linea = (notElem False ((listaProveedoras.plantas)linea))
+
+--Ejercicio 4:
+long :: [a] -> Int
+long [] = 0
+long (x:xs) = 1 + long xs
+
+tieneAlMenosDosPlantas :: LineaDeDefensa->Bool
+tieneAlMenosDosPlantas linea = (2<=(long.plantas) linea )
+obtenerSiguientePlanta :: [Planta]->Planta
+obtenerSiguientePlanta listaPlantas = (head.tail) listaPlantas
+mismaEspecialidad :: [Planta]->[Bool] 
+mismaEspecialidad listaPlantas = [(especialidad.head) listaPlantas == (especialidad.obtenerSiguientePlanta) listaPlantas] ++ (mismaEspecialidad.tail) listaPlantas
+lineaMixta :: LineaDeDefensa->Bool
+lineaMixta linea = (notElem True ((mismaEspecialidad.plantas) linea)) && tieneAlMenosDosPlantas linea
+
+--Ejercicio 5:
+filtrarEspacios :: String -> String
+filtrarEspacios cadena = filter (/=' ') cadena 
+filtrarEspaciosEnZombie :: Zombie -> String
+filtrarEspaciosEnZombie zombie = (filtrarEspacios.nombre) zombie
+quitarLetras ::  Planta->Zombie->String
+quitarLetras planta zombie = ((drop.poderAtaque) planta) (filtrarEspaciosEnZombie zombie)
+resultadoAtaqueAZombie:: Planta->Zombie->Zombie
+resultadoAtaqueAZombie planta zombie = Zombie (quitarLetras planta zombie) (accesorio zombie) (dañoMordida zombie) (determinarNivelDeMuerte (quitarLetras planta zombie))
+
+
+restarPuntosDeVida :: Planta->Zombie->Int
+restarPuntosDeVida planta zombie = (puntosDeVida planta) - (dañoMordida zombie)
+resultadoAtaqueAPlanta planta zombie :: Planta->Zombie->Int->Planta
+resultadoAtaqueAPlanta planta zombie secuencial =  Planta (especie planta) (restarPuntosDeVida planta zombie) (cantSoles planta) (poderAtaque planta) 
+
+
