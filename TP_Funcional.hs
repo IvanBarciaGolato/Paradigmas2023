@@ -91,6 +91,7 @@ estaEnPeligro:: LineaDeDefensa->Bool
 estaEnPeligro linea = (poderAtaquePlantas (plantas linea))<(mordiscosZombies(zombies linea))||(esLineaPeligrosa linea)==True
 --estaEnPeligro linea = ((poderAtaquePlantas.plantas) linea))<((mordiscosZombies.zombies) linea))||(esLineaPeligrosa linea)
 --Me tiraba error en esta línea, lo deje como estaba antes
+--IMPORTANTE: Cambiar a como estaba antes una vez finalizado el TP2
 
 esProveedora:: Planta->Bool
 esProveedora planta = (especialidad planta =="Proveedora")
@@ -134,3 +135,46 @@ resultadoAtaqueAPlanta planta zombie secuencial =  Planta (especie planta) (rest
 
 --Parte 2 del TP
 --Ej 1 Parte 2
+--Linea para Ej 1 del TP2
+--1 a)
+linea4 = LineaDeDefensa {
+  plantas = [sunflower, peaShooter],
+  zombies = crearListaInfinitaZombies zombieBase
+}
+
+crearListaInfinitaZombies:: Zombie->[Zombie]
+crearListaInfinitaZombies zombie = (zombie: crearListaInfinitaZombies zombie)
+
+--Al calcular el resultado de la función "estaEnPeligro", nos damos cuenta que la función queda infinitamente
+--sumando el mordiscos de todos los zombies base. Podemos decir que la función NO CONVERGE a ningún resultado 
+--como tal y nunca termina de generar la cantidad total de mordiscos.
+
+--1 b)
+linea5 = LineaDeDefensa {
+  plantas = crearListaInfinitaPlantas peaShooter,
+  zombies = [gargantuar, zombieBase, zombieBase]
+}
+
+crearListaInfinitaPlantas:: Planta->[Planta]
+crearListaInfinitaPlantas planta = (planta: crearListaInfinitaPlantas planta)
+
+--Al calcular el resultado de la función "necesitaSerDefendida", nos damos cuenta que la función recorre la lista
+--hasta encontrar una planta con una cantidad de soles >0. Como todas las peaShooters siempre van a tener una
+--cantidad de soles = 0, se hace evaluación diferida, en donde con solo al analizar la cabeza de la lista, la
+--función converge y me devuelve un resultado "False".
+
+linea6 = LineaDeDefensa {
+  plantas = crearListaInfinitaPlantas sunflower,
+  zombies = [gargantuar, zombieBase, zombieBase]
+}
+--Al igual que con la función "estaEnPeligro" con los zombies, la función "necesitaSerDefendida"  en este caso, 
+--nunca va a devolver a un resultado como tal, ya que la condición es que TODAS las plantas tengan una cantidad 
+--de soles >0, como todas las sunflower poseen una cantidad de soles = 1, recorre la lista infinitamente y nunca 
+--logra converger a nada.
+
+--2)
+
+data Cactus= Cactus{
+  planta:: Planta,
+  leQuitaGlobo::Bool--Crear función para quitar Globo
+}deriving (Show,Eq);
