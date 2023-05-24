@@ -174,7 +174,17 @@ linea6 = LineaDeDefensa {
 
 --2)
 
-data Cactus= Cactus{
-  planta:: Planta,
-  leQuitaGlobo::Bool--Crear función para quitar Globo
-}deriving (Show,Eq);
+cactus= Planta "Cactus" 9 0 0
+
+lineaBalloon = LineaDeDefensa {
+  plantas = [cactus],
+  zombies = [gargantuar, zombieBalloon, zombieBase, zombieBalloon]
+}
+--Hacer una función que recorra todos los zombies de la línea y les quite los globos
+leQuitaGlobo:: LineaDeDefensa->[Zombie]
+leQuitaGlobo lineaDefensa | any (== cactus) (plantas lineaDefensa) =  map (crearListaCompleta) (zombies lineaDefensa)
+                          | otherwise = (zombies lineaDefensa)
+
+crearListaCompleta::Zombie->Zombie
+crearListaCompleta zombie | (nombre zombie) == "Balloon Zombie" = (Zombie (nombre zombie) [] (dañoMordida zombie) (nivelDeMuerte zombie))
+                          | otherwise = (Zombie (nombre zombie) (accesorio zombie) (dañoMordida zombie) (nivelDeMuerte zombie))
