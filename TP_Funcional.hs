@@ -88,7 +88,7 @@ esLineaPeligrosa:: LineaDeDefensa -> Bool
 esLineaPeligrosa linea = (notElem False ((listaCantPeligros.zombies) linea))&&(length (zombies linea)>0)
  
 estaEnPeligro:: LineaDeDefensa->Bool
-estaEnPeligro linea = (poderAtaquePlantas (plantas linea))<(mordiscosZombies(zombies linea))||(esLineaPeligrosa linea)==True
+estaEnPeligro linea = (poderAtaquePlantas (plantas linea))<(mordiscosZombies(zombies linea))||(esLineaPeligrosa linea)
 --estaEnPeligro linea = ((poderAtaquePlantas.plantas) linea))<((mordiscosZombies.zombies) linea))||(esLineaPeligrosa linea)
 --Me tiraba error en esta línea, lo deje como estaba antes
 --IMPORTANTE: Cambiar a como estaba antes una vez finalizado el TP2
@@ -113,6 +113,7 @@ tieneAlMenosDosPlantas linea = (2<=(long.plantas) linea )
 obtenerSiguientePlanta :: [Planta]->Planta
 obtenerSiguientePlanta listaPlantas = (head.tail) listaPlantas
 mismaEspecialidad :: [Planta]->[Bool] 
+mismaEspecialidad [] = []
 mismaEspecialidad listaPlantas = [(especialidad.head) listaPlantas == (especialidad.obtenerSiguientePlanta) listaPlantas] ++ (mismaEspecialidad.tail) listaPlantas
 lineaMixta :: LineaDeDefensa->Bool
 lineaMixta linea = (notElem True ((mismaEspecialidad.plantas) linea)) && tieneAlMenosDosPlantas linea
@@ -130,8 +131,8 @@ resultadoAtaqueAZombie planta zombie = Zombie (quitarLetras planta zombie) (acce
 
 restarPuntosDeVida :: Planta->Zombie->Number
 restarPuntosDeVida planta zombie = (puntosDeVida planta) - (dañoMordida zombie)
-resultadoAtaqueAPlanta:: Planta->Zombie->Number->Planta--Estaba mal definida la función
-resultadoAtaqueAPlanta planta zombie secuencial =  Planta (especie planta) (restarPuntosDeVida planta zombie) (cantSoles planta) (poderAtaque planta) 
+resultadoAtaqueAPlanta:: Planta->Zombie->Planta--Estaba mal definida la función
+resultadoAtaqueAPlanta planta zombie =  Planta (especie planta) (restarPuntosDeVida planta zombie) (cantSoles planta) (poderAtaque planta) 
 
 --Parte 2 del TP
 --Ej 1 Parte 2
@@ -188,3 +189,74 @@ leQuitaGlobo lineaDefensa | any (== cactus) (plantas lineaDefensa) =  map (crear
 crearListaCompleta::Zombie->Zombie
 crearListaCompleta zombie | (nombre zombie) == "Balloon Zombie" = (Zombie (nombre zombie) [] (dañoMordida zombie) (nivelDeMuerte zombie))
                           | otherwise = (Zombie (nombre zombie) (accesorio zombie) (dañoMordida zombie) (nivelDeMuerte zombie))
+
+--Ejercicio 3, hago esta parte porque la necesito para el ejercicio 7
+data Horda = Horda { 
+paresOrdenados :: [(Zombie, LineaDeDefensa)]
+}deriving (Show, Eq)
+
+septimoRegimiento = Horda [(zombieNewspaper,linea2),(zombieBalloon,linea1),(zombieBalloon,linea1),( zombieBalloon,linea3),(zombieBalloon,linea3)]
+region = Horda [(gargantuar,linea1),(gargantuar,linea1),(gargantuar,linea2),(gargantuar,linea2),(gargantuar,linea3),(gargantuar,linea3)]
+-- Ejercicio 6
+ataqueSistematico :: [Planta] -> Zombie -> [Planta]
+ataqueSistematico plantasAtacadas zombie = [resultadoAtaqueAPlanta p zombie|p<-plantasAtacadas]
+-- Ejercicio 7, esta incompleto, cuando estén los ej 4 y 5 lo termino porque se necesita saber si un zombie o una planta murio
+
+zombiesDeHorda :: Horda->[Zombie]
+zombiesDeHorda horda = map(fst) (paresOrdenados horda)
+
+noEsPeligroso :: Zombie->Bool
+noEsPeligroso zombie = not (esPeligroso zombie)
+
+obtenerZombiesNoPeligrosos :: Horda->[Zombie]
+obtenerZombiesNoPeligrosos horda = filter (noEsPeligroso) (zombiesDeHorda horda)
+
+ataqueSistematico2 :: [Planta] -> [Zombie] -> [Planta]
+ataqueSistematico2 plantasAtacadas listazombies = [resultadoAtaqueAPlanta p z |p<-plantasAtacadas, z<-listazombies]
+
+resultadoDeAtaque :: LineaDeDefensa->Horda-> LineaDeDefensa
+resultadoDeAtaque linea horda = LineaDeDefensa (ataqueSistematico2 (plantas linea)(zombiesDeHorda horda))  (zombies linea ++ zombiesDeHorda horda)
+
+-- Ejercicio 8, lo mismo no se puede hacer hasta que no esten 4 y 5
+
+--Ejercicio 9
+tieneMenosLetras :: Zombie->LineaDeDefensa->Bool
+tieneMenosLetras zombie linea = notElem False ((compararLetras.zombies)linea zombie)
+
+compararLetras :: [Zombie]->Zombie->[Bool]
+compararLetras = (\listazombies zombie  -> [(length.nombre)zombie > ((length.nombre).head)listazombies] ++ (compararLetras(tail listazombies)(zombie)))
+-- Ejercicio 10 
+ -- f ::  Eq a=>a->a->[a]->(a,a)->a
+  --f h m p lista
+   --              | elem h lista = head (filter (m h) lista)
+    --             |otherwise = fst p
+-- Es una funcion que no compila 
+-- La intencion es que reciba dos elementos y dos listas, en el caso de que el elemento h se encuentre en la lista, 
+--devuelve el primer elemento de una nueva lista solo compuesto por aquellos elementos de la lista que sean m o h, es decir devuelve m o h.
+-- En el caso de que el elemento h no esté en la lista, devuelve el primer elemento de la tupla p. 
+--En primer lugar, hay polimorfismo porque se define la función una vez para luego ser utilizada con cualquier tipo de dato
+-- se aplican los conceptos de guardas y está filter que es una función de orden superior, sin embargo no es una funcion expresiva 
+--y podría ser mas declarativa(menos detalle algoritmico)
+--Funcion mejorada a continuación. 
+buscarElementoEnLista :: Eq a=>a->a->[a]->(a,a)->a
+buscarElementoEnLista elemento1 elemento2 lista tupla| elemPerteneceALista elemento1 lista = filtrarYDevolverPrimerElemento elemento1 elemento2 lista
+                                                     | otherwise = fst tupla
+
+elemPerteneceALista :: Eq a=>a->[a]->Bool
+elemPerteneceALista elemento lista = elem elemento lista
+
+filtrarYDevolverPrimerElemento :: Eq a=>a->a->[a]->a
+filtrarYDevolverPrimerElemento elemento1 elemento2 lista = head ((filter (==elemento1) lista) ++ (filter (==elemento2) lista))
+
+
+--Si se trabaja con una lista infinita, el filter recorrerá la lista infinitamente.
+-- Ejercicio 11
+nivelDeSupervivencia :: LineaDeDefensa->Number
+nivelDeSupervivencia = (\linea -> (sumaDeVidaPlantas.plantas)linea - (sumaDeMuerteZombies.zombies)linea)
+
+sumaDeVidaPlantas :: [Planta]->Number
+sumaDeVidaPlantas = (\listaplantas -> (puntosDeVida.head)listaplantas + (sumaDeVidaPlantas.tail)listaplantas )
+
+sumaDeMuerteZombies :: [Zombie]->Number
+sumaDeMuerteZombies = (\listazombies ->(nivelDeMuerte.head)listazombies + (sumaDeMuerteZombies.tail)listazombies)
+
