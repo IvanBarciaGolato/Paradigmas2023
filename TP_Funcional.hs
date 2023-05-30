@@ -191,19 +191,53 @@ crearListaCompleta zombie | (nombre zombie) == "Balloon Zombie" = (Zombie (nombr
                           | otherwise = (Zombie (nombre zombie) (accesorio zombie) (dañoMordida zombie) (nivelDeMuerte zombie))
 
 --Ejercicio 3, hago esta parte porque la necesito para el ejercicio 7
-data Horda = Horda { 
-paresOrdenados :: [(Zombie, LineaDeDefensa)]
+data Horda= Horda{
+  parHorda:: [([Zombie],LineaDeDefensa)]
 }deriving (Show, Eq)
 
-septimoRegimiento = Horda [(zombieNewspaper,linea2),(zombieBalloon,linea1),(zombieBalloon,linea1),( zombieBalloon,linea3),(zombieBalloon,linea3)]
-region = Horda [(gargantuar,linea1),(gargantuar,linea1),(gargantuar,linea2),(gargantuar,linea2),(gargantuar,linea3),(gargantuar,linea3)]
+septimo_regimiento :: Horda
+septimo_regimiento = Horda [([zombieBalloon,zombieBalloon],linea1),([zombieNewspaper],linea2),([zombieBalloon,zombieBalloon],linea3)]
+
+region :: Horda
+region = Horda [([gargantuar,gargantuar],linea1),([gargantuar,gargantuar],linea2),([gargantuar,gargantuar],linea3)]
+
+data Jardin=UnJardin{
+  lineasJardin :: [LineaDeDefensa]
+}deriving (Show, Eq)
+
+jardin::Jardin
+jardin = UnJardin [linea1,linea2,linea3] 
+
+agregar:: Jardin->Horda->Jardin
+agregar jardin horda =  UnJardin (map (\tupla->LineaDeDefensa (plantas (snd tupla)) ((fst tupla)++zombies (snd tupla))) (parHorda horda))
+
+--4)
+rondaDeAtaque:: Planta->Zombie->(Planta,Zombie)
+rondaDeAtaque planta zombie= (resultadoAtaqueAPlanta planta zombie,resultadoAtaqueAZombie planta zombie)
+
+--Version recursiva en caso de que se enfrenten más de una vez (en el ejemplo hay un 3 en la consulta? asumí que es por eso. Lo dejo como está arriba)
+--rondaDeAtaque:: Planta->Zombie->Number->(Planta,Zombie)
+--rondaDeAtaque planta zombie numeroRonda
+--                             |(numeroRonda==0) = (planta,zombie)
+--                              |otherwise =  rondaDeAtaque (resultadoAtaqueAPlanta planta zombie) (resultadoAtaqueAZombie planta zombie) (numeroRonda - 1)
+
+--5)
+murioUnaPlanta:: Planta->Zombie->Bool
+murioUnaPlanta planta zombie = (puntosDeVida (resultadoAtaqueAPlanta planta zombie)<=0) ==True
+
+murioUnZombie:: Planta->Zombie->Bool
+murioUnZombie planta zombie = (nivelDeMuerte (resultadoAtaqueAZombie planta zombie)<=0) ==True
+
+verificarSi:: (Planta->Zombie->Bool)->Planta->Zombie->Bool
+verificarSi criterio planta zombie = criterio planta zombie
+
 -- Ejercicio 6
 ataqueSistematico :: [Planta] -> Zombie -> [Planta]
 ataqueSistematico plantasAtacadas zombie = [resultadoAtaqueAPlanta p zombie|p<-plantasAtacadas]
 -- Ejercicio 7, esta incompleto, cuando estén los ej 4 y 5 lo termino porque se necesita saber si un zombie o una planta murio
 
 zombiesDeHorda :: Horda->[Zombie]
-zombiesDeHorda horda = map(fst) (paresOrdenados horda)
+zombiesDeHorda horda = concatMap fst (parHorda horda)
 
 noEsPeligroso :: Zombie->Bool
 noEsPeligroso zombie = not (esPeligroso zombie)
@@ -218,6 +252,18 @@ resultadoDeAtaque :: LineaDeDefensa->Horda-> LineaDeDefensa
 resultadoDeAtaque linea horda = LineaDeDefensa (ataqueSistematico2 (plantas linea)(zombiesDeHorda horda))  (zombies linea ++ zombiesDeHorda horda)
 
 -- Ejercicio 8, lo mismo no se puede hacer hasta que no esten 4 y 5
+obtenerListasPlantas::  Jardin-> Horda->[Planta]--Trate de hacerla de orden superior pero no compilaba, hice dos listas distintas
+obtenerListasPlantas jardin horda = concat (map (plantas) (lineasJardin (agregar jardin horda)))
+
+obtenerListasZombies::  Jardin-> Horda->[Zombie]
+obtenerListasZombies jardin horda = concat (map (zombies) (lineasJardin (agregar jardin horda)))
+
+peleaPlantasYZombies:: [Planta]->[Zombie]->[(Planta,Zombie)]
+peleaPlantasYZombies plantas zombies = zipWith rondaDeAtaque plantas zombies
+
+theZombiesAteYourBrains:: Jardin->Horda->Bool
+theZombiesAteYourBrains jardin horda= any (\(planta, zombie) -> murioUnaPlanta planta zombie) (peleaPlantasYZombies (obtenerListasPlantas jardin horda) (obtenerListasZombies jardin horda))
+
 
 --Ejercicio 9
 tieneMenosLetras :: Zombie->LineaDeDefensa->Bool
