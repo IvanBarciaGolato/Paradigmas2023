@@ -34,6 +34,7 @@ persigue(scar, pumba).
 persigue(shenzi, simba).
 persigue(shenzi, scar).
 persigue(banzai, timon).
+persigue(scar, mufasa).
 
 %Ejercicio 1a
 jugosita(cucaracha(_,Tamanio,Peso)):- comio(_,cucaracha(_,Tamanio,Otropeso)), Peso > Otropeso. 
@@ -66,3 +67,20 @@ cuantoEngorda3(Personaje,PesoTotal) :-  peso(Personaje,_), not(comio(_,Personaje
 cuantoEngorda3(Personaje, 0):- comio(_,Personaje).
 
 engordaPersonaje3(Personaje, Peso):- personajecome(Personaje, Victima), peso(Victima,Peso1), cuantoEngorda3(Victima,Peso2), Peso is Peso1 + Peso2.
+
+% Ejercicio 4
+rey(Rey):-	persigue(_,Rey),
+			findall(Perseguidor,persigue(Perseguidor,Rey),Perseguidores),
+			length(Perseguidores, 1 ),
+			not(persigue(Rey,_)),
+			not(comio(Rey,_)).
+% Se utiliza polimorfismo en los predicados que reciben un personaje como argumento, dado que se aplican soluciones genéricas, contemplando las particularidades de los distintos
+% tipos de datos. Por ejemplo la hormiga tiene solo el nombre mientras que la cucaracha tiene nombre, peso y tamaño. Evaluando el argumento que recibe, tendrá una alternativa dentro del 
+% predicado según matchee. 
+
+%La recursividad es utilizada en el ejercicio 2c, cuando desde cuantoEngorda3 se llama al predicado engordaPersonaje que a la vez vuelve a llamar, cuantoEngorda3. La recursividad
+% tiene un caso base, en este caso es cuantoEngorda3(Personaje, 0):- comio(_,Personaje).
+
+%Son predicados inversibles: hormigofilico(Personaje), cucarachofobico(Personaje),picarones(Picarones), picaron(Personaje),cuantoEngorda(Personaje,PesoTotal), cuantoEngorda2(Personaje,PesoTotal),
+%cuantoEngorda3(Personaje,PesoTotal) y rey(Rey). El caso de picarones(Picarones) es especial porque es capaz de devolver la lista de picarones pero utiliza un findall
+% que al ser un predicado de orden superior no es inversible, pero como la lista de los personajes que son picarones se puede generar con el predicado picaron(Personaje), entonces si es inversible.
