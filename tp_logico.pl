@@ -67,6 +67,25 @@ cuantoEngorda3(Personaje,PesoTotal) :-  peso(Personaje,_), not(comio(_,Personaje
 cuantoEngorda3(Personaje, 0):- comio(_,Personaje).
 
 engordaPersonaje3(Personaje, Peso):- personajecome(Personaje, Victima), peso(Victima,Peso1), cuantoEngorda3(Victima,Peso2), Peso is Peso1 + Peso2.
+%Ejercicio 3
+combinaComidas(Personaje, ListaComidas) :-
+    findall(Comida, comio(Personaje, Comida), ComidasComidas),
+    findall(PersigueComida, persigue(Personaje, PersigueComida), ComidasPersigue),
+    append(ComidasComidas, ComidasPersigue, TodasComidas),
+    eliminarRepetidos(TodasComidas, ListaComidas).
+
+eliminarRepetidos([], []).
+eliminarRepetidos([X | Xs], [X | Ys]) :-
+    eliminarElemento(X, Xs, Aux),
+    eliminarRepetidos(Aux, Ys).
+
+eliminarElemento(_, [], []).
+eliminarElemento(Elem, [Elem | Cola], Resultado) :-
+    eliminarElemento(Elem, Cola, Resultado).
+eliminarElemento(Elem, [X | Cola], [X | Resultado]) :-
+    X \= Elem,
+    eliminarElemento(Elem, Cola, Resultado).
+
 
 % Ejercicio 4
 rey(Rey):-	persigue(_,Rey),
@@ -79,7 +98,8 @@ rey(Rey):-	persigue(_,Rey),
 % predicado según matchee. 
 
 %La recursividad es utilizada en el ejercicio 2c, cuando desde cuantoEngorda3 se llama al predicado engordaPersonaje que a la vez vuelve a llamar, cuantoEngorda3. La recursividad
-% tiene un caso base, en este caso es cuantoEngorda3(Personaje, 0):- comio(_,Personaje).
+% tiene un caso base, en este caso es cuantoEngorda3(Personaje, 0):- comio(_,Personaje). Tambien aparece en el ejercicio 3, el caso base es cuando la lista se encuentra
+% vacía, por lo que no hay mas comidas para eliminar
 
 %Son predicados inversibles: hormigofilico(Personaje), cucarachofobico(Personaje),picarones(Picarones), picaron(Personaje),cuantoEngorda(Personaje,PesoTotal), cuantoEngorda2(Personaje,PesoTotal),
 %cuantoEngorda3(Personaje,PesoTotal) y rey(Rey). El caso de picarones(Picarones) es especial porque es capaz de devolver la lista de picarones pero utiliza un findall
